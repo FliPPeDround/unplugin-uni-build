@@ -101,6 +101,8 @@
   },
   "dependencies": {
     "@vue/compiler-sfc": "^3.3.4",
+    "posthtml-parser": "^0.11.0",
+    "posthtml-render": "^3.0.0",
     "unplugin": "^1.4.0"
   },
   "devDependencies": {

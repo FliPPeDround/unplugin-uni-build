@@ -11,7 +11,7 @@ export function parseSFC(code: string) {
   }
 
   if (descriptor.template)
-    output.template = descriptor.template.ast
+    output.template = descriptor.template?.content
 
   if (descriptor.script?.lang === 'ts' || descriptor.scriptSetup?.lang === 'ts') {
     if (descriptor.script?.content)

@@ -7,9 +7,7 @@ const files = import.meta.glob('./fixtures/*.vue', {
 })
 
 describe('fixtures', async () => {
-  console.log(files)
   for (const [id, code] of Object.entries(files)) {
-    console.log(code)
     test(id.replace(/\\/g, '/'), () => {
       const exec = () => parseSFC(code)
       if (id.includes('error'))

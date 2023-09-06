@@ -1,38 +1,50 @@
-import type { TemplateASTNode } from '@/types'
-import {NodeTypes} from './nodeEnum'
+import { parser } from 'posthtml-parser'
+import { render } from 'posthtml-render'
+import { transformTypeScript } from '../transformTs2js'
 
-export function generateTemplate(ast: TemplateASTNode) {
-  let result = ''
+export interface Node {
+  tag: string
+  attrs?: Record<string, string>
+  content: Node[]
+}
 
-  function traverse(ast: TemplateASTNode) {
-    switch (ast.type) {
-      case 1: // Element Node
-        result += `<${ast.tag}`
-        if (ast.props.length > 0) {
-          ast.props.forEach((prop) => {
-            result += ` ${prop.name}="${prop.value}"`
-          })
-        }
-        result += '>'
-        if (ast.children)
-          ast.children.forEach(child => traverse(child))
+const transformTag = [':', 'v', '@']
 
-        if (!ast.isSelfClosing)
-          result += `</${ast.tag}>`
+function getContentInsideBraces(str: string) {
+  const regex = /^\{\{([\s\S]*)\}\}$/
+  const match = regex.exec(str)
+  if (match)
+    return match[1]
 
-        break
-      case 2: // Text Node
-        result += ast.content
-        break
-      case 5: // Interpolation Node
-        result += `{{${ast.content.content}}}`
-        break
-      default:
-        break
+  else
+    return false
+}
+
+export function renderTemplate(content: string) {
+  const node = (parser(content) as unknown as Node[])
+  const newNode = transformTemplate(node)
+  return render(newNode)
+}
+
+export function transformTemplate(node: Node[]) {
+  for (let i = 0; i < node.length; i++) {
+    const item = node[i]
+    if (typeof item === 'string') {
+      const content = getContentInsideBraces(item)
+      node[i] = content ? `{{${transformTypeScript(content).trim().slice(0, -1)}}}` : item
+      continue
     }
+
+    const { attrs, content } = item
+    for (const key in attrs) {
+      if (transformTag.includes(key[0])) {
+        const code = attrs[key]
+        const attrValue = transformTypeScript(code).trim().slice(0, -1)
+        attrs[key] = attrValue
+      }
+    }
+    item.content = transformTemplate(content)
   }
 
-  traverse(ast)
-  console.log(result)
-  return result
+  return node
 }

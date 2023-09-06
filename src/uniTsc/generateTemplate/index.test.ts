@@ -1,58 +1,62 @@
 import { describe, expect, it } from 'vitest'
-import { generateTemplate } from '.'
+import type { Node } from '.'
+import { renderTemplate, transformTemplate } from '.'
 
 describe('generate template', () => {
-  it('base', () => {
-    const ast = {
-      type: 1,
-      ns: 0,
-      tag: 'template',
-      tagType: 0,
-      props: [],
-      isSelfClosing: false,
-      children: [
-        {
-          type: 2,
-          content: '  ',
+  it('render', () => {
+    const content
+= `<div v-model.number="2" :disabled="(disabled as boolean)">
+<p @click="(e: Event) => foo(e, disabled)">
+  {{foo ? get('aa') : get}}
+  </p> 
+</div>`
+    expect(renderTemplate(content)).toMatchInlineSnapshot(`
+      "<div v-model.number=\\"2\\" :disabled=\\"disabled\\">
+      <p @click=\\"(e) => foo(e, disabled)\\">
+        {{foo ? get('aa') : get}}
+        </p> 
+      </div>"
+    `)
+  })
+
+  it('transform', () => {
+    const node: Node = [
+      {
+        content: [
+          '',
+          {
+            content: ['{{foo}}'],
+            tag: 'p',
+          },
+          '',
+        ],
+        attrs: {
+          'disabled': '',
+          ':disabled': '(disabled as number)',
         },
+        tag: 'div',
+      },
+    ]
+    expect(transformTemplate(node)).toMatchInlineSnapshot(`
+      [
         {
-          type: 1,
-          ns: 0,
-          tag: 'div',
-          tagType: 0,
-          props: [],
-          isSelfClosing: false,
-          children: [
+          "attrs": {
+            ":disabled": "disabled",
+            "disabled": "",
+          },
+          "content": [
+            "",
             {
-              type: 2,
-              content: '    ',
+              "content": [
+                "{{foo}}",
+              ],
+              "tag": "p",
             },
-            {
-              type: 5,
-              content: {
-                type: 4,
-                isStatic: false,
-                constType: 0,
-                content: 'foo',
-              },
-            },
-            {
-              type: 2,
-              content: '\n  ',
-            },
+            "",
           ],
+          "tag": "div",
         },
-        {
-          type: 2,
-          content: '\n',
-        },
-      ],
-    }
-    expect(generateTemplate(ast)).toBe(`
-<template>
-  <div>
-    {{ foo }}
-  </div>
-</template>`)
+      ]
+    `)
   })
 })
